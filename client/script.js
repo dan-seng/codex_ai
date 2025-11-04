@@ -119,7 +119,7 @@ const handleSubmit = async (e) =>{
 
     try {
         // Fetch data from the server -> bot's response
-        const response = await fetch('http://localhost:5000/', {
+        const response = await fetch('https://aichat-x0q0.onrender.com', {
             method: 'POST',
             headers: {
                 'Content-type': 'application/json'
