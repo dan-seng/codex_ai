@@ -4,168 +4,126 @@ import user from './assets/user.svg';
 const form = document.querySelector('form');
 const chatContainer = document.getElementById('chat_container');
 const submitButton = document.querySelector('button[type="submit"]');
-const buttonImg = submitButton.querySelector('img');
+const BASE_URL = 'https://codex-ai-u05x.onrender.com'; 
 
-let loadInterval;
-let abortController = null;
-let isResponding = false;
- function loader(element){
-    element.textContent = '';
-    loadInterval = setInterval(() =>{
-        element.textContent += '.';
-        if(element.textContent === '....'){
-            element.textContent = '';
-        }
-    }, 300)
- }
+let loadInterval, abortController, isResponding = false;
 
-function typeText(element, text){
-    let index = 0;
-    let interval = setInterval(() =>{
-        if(index < text.length){
-            element.innerHTML += text.charAt(index);
-            index ++;
-        } else{
-            clearInterval(interval);
-            // Change back to send button when typing is done
-            toggleButton(false);
-        }
-    }, 20)
-}
+// ===== Helpers =====
+const generateId = () => `id-${Date.now()}-${Math.random().toString(16)}`;
+const toggleBtn = on => submitButton.innerHTML = on ? '<svg width="12" height="12"><rect width="12" height="12" rx="2" fill="white"/></svg>' : '<img src="./assets/send.svg" alt="Send" />';
+const chatStripe = (isAi, value, id) => `
+<div class="wrapper ${isAi && 'ai'}">
+  <div class="chat">
+    <div class="profile"><img src="${isAi ? bot : user}" alt="${isAi ? 'bot' : 'user'}"/></div>
+    <div class="message" id=${id}>${value}</div>
+  </div>
+</div>`;
 
- function generateUniqueId(){
-    const timestamp = Date.now();
-    const randomNumber = Math.random();
-    const hexadecimalString = randomNumber.toString(16);
-    return `id-${timestamp}-${hexadecimalString}`; 
- }
-
-function chatStripe (isAi, value, uniqueId){
-   return (
-    `
-     <div class="wrapper ${isAi && 'ai'}">
-        <div class="chat">
-        <div class="profile">
-        <img
-         src="${isAi? bot: user}"
-         alt="${isAi? "bot": "user"}"
-         />
-        </div>
-        <div class="message" id=${uniqueId}>
-         ${value}
-        </div>
-        </div>
-     </div>
-    `
-   )
-}
-
-const toggleButton = (responding) => {
-    isResponding = responding;
-    if (responding) {
-        // Change to stop button
-        buttonImg.style.transform = 'rotate(0deg)';
-        buttonImg.style.width = '0.75rem';
-        buttonImg.style.height = '0.75rem';
-        submitButton.style.background = '#000000';
-        submitButton.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="white" xmlns="http://www.w3.org/2000/svg"><rect width="12" height="12" rx="2"/></svg>';
-    } else {
-        // Change back to send button
-        submitButton.style.background = '#000000';
-        submitButton.innerHTML = '<img src="./assets/send.svg" alt="Send" />';
-    }
+// ===== Loader & Typewriter =====
+const loader = el => {
+  el.textContent = '';
+  loadInterval = setInterval(() => {
+    el.textContent += '.';
+    if (el.textContent === '....') el.textContent = '';
+  }, 300);
 };
 
-const stopResponse = () => {
-    if (abortController) {
-        abortController.abort();
-        abortController = null;
-    }
-    if (loadInterval) {
-        clearInterval(loadInterval);
-    }
-    toggleButton(false);
-};
+const typeText = (el, html) => {
+  el.innerHTML = '';
+  let i = 0;
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+  const nodes = Array.from(tempDiv.childNodes);
 
-const handleSubmit = async (e) =>{
-    e.preventDefault();
-    
-    // If already responding, stop it
-    if (isResponding) {
-        stopResponse();
-        return;
-    }
-    
-    const data = new FormData(form);
-    const prompt = data.get('prompt');
-    
-    if (!prompt.trim()) return;
-
-    chatContainer.innerHTML += chatStripe(false, prompt);
-    form.reset();
-
-    const uniqueId = generateUniqueId();
-    chatContainer.innerHTML += chatStripe(true, " ", uniqueId);
+  const interval = setInterval(() => {
+    if (i < nodes.length) el.appendChild(nodes[i++]);
+    else clearInterval(interval);
     chatContainer.scrollTop = chatContainer.scrollHeight;
+  }, 20);
+};
 
-    const messageDiv = document.getElementById(uniqueId);
-    loader(messageDiv);
-    
-    // Change to stop button
-    toggleButton(true);
-    
-    // Create new AbortController for this request
-    abortController = new AbortController();
+// ===== Markdown to HTML =====
+const markdownToHTML = text =>
+  text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+      .replace(/\*(.*?)\*/g, '<i>$1</i>');
 
-    try {
-        // Fetch data from the server -> bot's response
-        const response = await fetch('https://aichat-x0q0.onrender.com', {
-            method: 'POST',
-            headers: {
-                'Content-type': 'application/json'
-            },
-            body: JSON.stringify({
-                prompt: prompt
-            }),
-            signal: abortController.signal
-        });
+// ===== LocalStorage Chat =====
+const loadChatHistory = () => {
+  const saved = localStorage.getItem('chatHistory');
+  if (saved) {
+    chatContainer.innerHTML = saved;
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+};
 
-        clearInterval(loadInterval);
-        messageDiv.innerHTML = '';
+const saveChatToStorage = () => {
+  localStorage.setItem('chatHistory', chatContainer.innerHTML);
+};
 
-        if (response.ok) {
-            const data = await response.json();
-            const parsedData = data.bot.trim();
+// Clear chat
+const clearChatHistory = () => {
+  chatContainer.innerHTML = '';
+  localStorage.removeItem('chatHistory');
+  const sessionId = localStorage.getItem('chatSessionId');
+  if (sessionId)
+    fetch(`${BASE_URL}/clear`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId }) });
+};
 
-            typeText(messageDiv, parsedData);
-        } else {
-            const err = await response.text();
-            messageDiv.innerHTML = "Something went wrong!!!";
-            alert(err);
-        }
-    } catch (error) {
-        clearInterval(loadInterval);
-        if (error.name === 'AbortError') {
-            messageDiv.innerHTML = 'Response stopped by user.';
-        } else {
-            messageDiv.innerHTML = "Something went wrong!!!";
-            console.error('Error:', error);
-        }
-    } finally {
-        // Change back to send button
-        toggleButton(false);
-        abortController = null;
+// ===== Handle Submit =====
+const handleSubmit = async e => {
+  e.preventDefault();
+  if (isResponding) return abortController?.abort();
+
+  const prompt = new FormData(form).get('prompt')?.trim();
+  if (!prompt) return;
+
+  const sessionId = localStorage.getItem('chatSessionId') || (localStorage.setItem('chatSessionId', crypto.randomUUID()), localStorage.getItem('chatSessionId'));
+  const id = generateId();
+
+  chatContainer.innerHTML += chatStripe(false, prompt) + chatStripe(true, ' ', id);
+  saveChatToStorage();
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+  form.reset();
+
+  const msgDiv = document.getElementById(id);
+  loader(msgDiv); toggleBtn(true); isResponding = true;
+  abortController = new AbortController();
+
+  try {
+    const res = await fetch(BASE_URL + '/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, sessionId }),
+      signal: abortController.signal
+    });
+
+    clearInterval(loadInterval);
+    msgDiv.textContent = '';
+
+    if (res.ok) {
+      const data = await res.json();
+      typeText(msgDiv, markdownToHTML(data.bot.trim()));
+      saveChatToStorage();
+    } else {
+      msgDiv.textContent = 'Something went wrong!!!';
     }
+  } catch (err) {
+    msgDiv.textContent = 'Something went wrong!!!';
+    console.error(err);
+  } finally {
+    toggleBtn(false);
+    isResponding = false;
+  }
+};
 
-}
-    form.addEventListener('submit', handleSubmit);
-    form.addEventListener('keyup', (e) =>{
-        if(e.keyCode===13){
-            handleSubmit(e);
-        }
-})
-
-
-
-
-
+// ===== Initialize =====
+// In your DOMContentLoaded event:
+document.addEventListener('DOMContentLoaded', () => {
+    loadChatHistory();
+    
+    // Add event listener for the clear button
+    document.getElementById('clearChat').addEventListener('click', clearChatHistory);
+  });
+// ===== Event Listeners =====
+form.addEventListener('submit', handleSubmit);
+form.addEventListener('keyup', e => e.key === 'Enter' && handleSubmit(e));
