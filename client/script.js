@@ -4,7 +4,7 @@ import user from './assets/user.svg';
 const form = document.querySelector('form');
 const chatContainer = document.getElementById('chat_container');
 const submitButton = document.querySelector('button[type="submit"]');
-const BASE_URL = 'https://codex-ai-u05x.onrender.com'; 
+const BASE_URL = 'https://aichat-x0q0.onrender.com';
 
 let loadInterval, abortController, isResponding = false;
 
