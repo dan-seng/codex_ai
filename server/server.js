@@ -16,6 +16,23 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 // 🧠 Store chat sessions per sessionId
 const chatSessions = {};
 
+// Retry wrapper for 503 errors
+async function fetchWithRetry(prompt, retries = 3, delay = 2000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const result = await model.generateContent(prompt);
+      return result;
+    } catch (err) {
+      if (err.status === 503 && i < retries - 1) {
+        console.log('Model busy, retrying...');
+        await new Promise(r => setTimeout(r, delay));
+      } else {
+        throw err;
+      }
+    }
+  }
+}
+
 // GET /
 app.get('/', (req, res) => {
   res.status(200).send({ message: 'Hello from Gemini Chatbot!' });
@@ -30,16 +47,16 @@ app.post('/', async (req, res) => {
     // Initialize session memory if not exists
     if (!chatSessions[sessionId]) chatSessions[sessionId] = [];
 
-    // Get today's date
-    const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    // Build full prompt with chat history
+    const context = chatSessions[sessionId]
+      .map(m => `${m.role === 'user' ? 'User' : 'Bot'}: ${m.text}`)
+      .join('\n');
+    const fullPrompt = `${context}\nUser: ${prompt}\nBot:`;
 
-    // Build full prompt with history + current date
-    const context = chatSessions[sessionId].map(m => `${m.role === 'user' ? 'User' : 'Bot'}: ${m.text}`).join('\n');
-    const fullPrompt = `${context}\nToday is ${today}.\nUser: ${prompt}\nBot:`;
+    // Fetch response with retry
+    const result = await fetchWithRetry(fullPrompt);
 
-    const result = await model.generateContent(fullPrompt);
-
-    // Get clean single response
+    // Extract clean text
     const responseText = result.response.candidates?.[0]?.content?.parts
       ?.map(p => p.text)
       .join(' ')
