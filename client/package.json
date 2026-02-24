@@ -12,6 +12,7 @@
     "vite": "^7.1.7"
   },
   "dependencies": {
+    "bootstrap-icons": "^1.13.1",
     "dompurify": "^3.3.0",
     "marked": "^16.4.1"
   }
