@@ -1,7 +1,7 @@
 :root {
-  --bg: #ffffff;
+  --bg: #f7f7f8;
   --panel: #f7f7f8;
-  --panel-2: #ececef;
+  --panel-2: #f7f7f8;
   --text: #111111;
   --muted: #5f6368;
   --line: #e4e4e7;
@@ -28,7 +28,12 @@ body {
 body {
   font-family: "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
   color: var(--text);
-  background: radial-gradient(circle at top, #ffffff 0%, #f7f7f8 70%, #f0f0f2 100%);
+  background: radial-gradient(
+    circle at top,
+    #ffffff 0%,
+    #f7f7f8 70%,
+    #f0f0f2 100%
+  );
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -109,6 +114,37 @@ hr {
   text-align: center;
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+#quick_actions {
+  width: min(100%, 900px);
+  margin: 0 auto;
+  padding: 0.2rem 0.75rem 0.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.quick-chip {
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  color: #2e2e33;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  line-height: 1;
+  padding: 0.55rem 0.8rem;
+  cursor: pointer;
+  transition: 0.16s ease;
+}
+
+.quick-chip:hover {
+  background: #f2f2f5;
+  border-color: #b6b8be;
+}
+
+.quick-chip:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 #chat_container {
@@ -223,7 +259,9 @@ textarea::-webkit-scrollbar-thumb,
 }
 
 .message code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
   font-size: 0.88em;
   background: #ececef;
   padding: 0.12rem 0.35rem;
@@ -360,7 +398,12 @@ textarea::-webkit-scrollbar-thumb,
   display: flex;
   align-items: flex-end;
   gap: 0.6rem;
-  background: linear-gradient(to top, rgba(247, 247, 248, 0.96), rgba(247, 247, 248, 0.85), rgba(247, 247, 248, 0));
+  background: linear-gradient(
+    to top,
+    rgba(247, 247, 248, 0.96),
+    rgba(247, 247, 248, 0.85),
+    rgba(247, 247, 248, 0)
+  );
 }
 
 textarea {
@@ -468,6 +511,11 @@ button[type="submit"][data-responding="true"] {
   .some {
     font-size: 0.86rem;
     padding-top: 0.7rem;
+  }
+
+  #quick_actions {
+    padding: 0.1rem 0.5rem 0.55rem;
+    gap: 0.4rem;
   }
 
   #chat_container {

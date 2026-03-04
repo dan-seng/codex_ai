@@ -6,14 +6,21 @@ const form = document.querySelector("form");
 const chatContainer = document.getElementById("chat_container");
 const submitButton = document.querySelector('button[type="submit"]');
 const promptInput = form.querySelector('textarea[name="prompt"]');
-//const BASE_URL = "http://localhost:5000/";
-const BASE_URL = "https://aichat-x0q0.onrender.com";
+const quickActions = document.getElementById("quick_actions");
+const BASE_URL = "http://localhost:5000/";
+//const BASE_URL = "https://aichat-x0q0.onrender.com";
 
 let abortController,
   isResponding = false;
 let typingInterval = null;
 let resolveTyping = null;
 let activeMessageDiv = null;
+const COMMON_QUESTIONS = [
+  "Who developed you?",
+  "What can you do?",
+  "How do I clear this chat?",
+  "Can you access real-time information?",
+];
 
 marked.setOptions({
   gfm: true,
@@ -33,6 +40,11 @@ const toggleBtn = (on) =>
   (submitButton.innerHTML = on
     ? '<i class="bi bi-stop-fill"></i>'
     : '<i class="bi bi-send-fill"></i>');
+const toggleQuickActions = (disabled) => {
+  quickActions
+    ?.querySelectorAll(".quick-chip")
+    .forEach((btn) => (btn.disabled = disabled));
+};
 const chatStripe = (isAi, value, id) => `
 <div class="wrapper ${isAi ? "ai" : "user"}">
   <div class="chat">
@@ -128,6 +140,13 @@ const resizePromptInput = () => {
   promptInput.style.height = `${Math.min(promptInput.scrollHeight, 180)}px`;
 };
 
+const renderQuickActions = () => {
+  if (!quickActions) return;
+  quickActions.innerHTML = COMMON_QUESTIONS.map(
+    (q) => `<button class="quick-chip" type="button" data-prompt="${escapeHtml(q)}">${escapeHtml(q)}</button>`,
+  ).join("");
+};
+
 // Clear chat
 const clearChatHistory = () => {
   chatContainer.innerHTML = "";
@@ -142,15 +161,14 @@ const clearChatHistory = () => {
 };
 
 // ===== Handle Submit =====
-const handleSubmit = async (e) => {
-  e?.preventDefault();
+const sendPrompt = async (rawPrompt) => {
   if (isResponding) {
     abortController?.abort();
     stopTypingAnimation();
     return;
   }
 
-  const prompt = new FormData(form).get("prompt")?.trim();
+  const prompt = rawPrompt?.trim();
   if (!prompt) return;
 
   const sessionId =
@@ -169,6 +187,7 @@ const handleSubmit = async (e) => {
   const msgDiv = document.getElementById(id);
   loader(msgDiv);
   toggleBtn(true);
+  toggleQuickActions(true);
   isResponding = true;
   abortController = new AbortController();
 
@@ -194,8 +213,15 @@ const handleSubmit = async (e) => {
     console.error(err);
   } finally {
     toggleBtn(false);
+    toggleQuickActions(false);
     isResponding = false;
   }
+};
+
+const handleSubmit = async (e) => {
+  e?.preventDefault();
+  const prompt = new FormData(form).get("prompt");
+  await sendPrompt(prompt);
 };
 
 // ===== Initialize =====
@@ -203,11 +229,18 @@ const handleSubmit = async (e) => {
 document.addEventListener("DOMContentLoaded", () => {
   loadChatHistory();
   resizePromptInput();
+  renderQuickActions();
 
   // Add event listener for the clear button
   document
     .getElementById("clearChat")
     .addEventListener("click", clearChatHistory);
+
+  quickActions?.addEventListener("click", async (e) => {
+    const chip = e.target.closest(".quick-chip");
+    if (!chip) return;
+    await sendPrompt(chip.dataset.prompt || "");
+  });
 });
 // ===== Event Listeners =====
 form.addEventListener("submit", handleSubmit);
