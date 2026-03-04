@@ -7,8 +7,10 @@ const chatContainer = document.getElementById("chat_container");
 const submitButton = document.querySelector('button[type="submit"]');
 const promptInput = form.querySelector('textarea[name="prompt"]');
 const quickActions = document.getElementById("quick_actions");
-const BASE_URL = "http://localhost:5000/";
-//const BASE_URL = "https://aichat-x0q0.onrender.com";
+
+const BASE_URL = (
+  import.meta.env.VITE_CHAT_URL || import.meta.env.LOCAL_URL
+).replace(/\/+$/, "");
 
 let abortController,
   isResponding = false;
@@ -143,7 +145,8 @@ const resizePromptInput = () => {
 const renderQuickActions = () => {
   if (!quickActions) return;
   quickActions.innerHTML = COMMON_QUESTIONS.map(
-    (q) => `<button class="quick-chip" type="button" data-prompt="${escapeHtml(q)}">${escapeHtml(q)}</button>`,
+    (q) =>
+      `<button class="quick-chip" type="button" data-prompt="${escapeHtml(q)}">${escapeHtml(q)}</button>`,
   ).join("");
 };
 
@@ -192,7 +195,7 @@ const sendPrompt = async (rawPrompt) => {
   abortController = new AbortController();
 
   try {
-    const res = await fetch(BASE_URL + "/", {
+    const res = await fetch(`${BASE_URL}/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt, sessionId }),
