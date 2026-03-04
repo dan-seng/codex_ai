@@ -18,10 +18,10 @@ let typingInterval = null;
 let resolveTyping = null;
 let activeMessageDiv = null;
 const COMMON_QUESTIONS = [
-  "Who developed you?",
-  "What can you do?",
-  "How do I clear this chat?",
-  "Can you access real-time information?",
+  "who developed you?",
+  "where does he live?",
+  "tech stacks he use?",
+  "about him?",
 ];
 
 marked.setOptions({

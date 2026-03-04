@@ -65,19 +65,27 @@ const PREDEFINED_RESPONSES = [
       /\byour\s+developer\b/i,
       /\byour\s+creator\b/i,
     ],
-    text: "I was developed by Daniel Gidey. You can connect with him here: [GitHub](https://github.com/dan-seng) | [LinkedIn](https://linkedin.com/in/danielgidey)",
+    text: "Daniel Gidey.",
   },
   {
-    patterns: [/\bwhat\s+can\s+you\s+do\b/i, /\byour\s+capabilities\b/i],
-    text: "I can help with writing, brainstorming, explaining concepts, code guidance, and general Q&A.",
+    patterns: [
+      /\bwhere\s+does\s+he\s+live\b/i,
+      /\bwhere\s+does\s+daniel\s+live\b/i,
+      /\bhe\s+lives\s+where\b/i,
+    ],
+    text: "He lives in Ethiopia.",
   },
   {
-    patterns: [/\bhow\s+do\s+i\s+clear\b.*\bchat\b/i, /\bclear\s+chat\b/i],
-    text: "Use the trash icon at the top-right of the chat to clear this conversation.",
+    patterns: [
+      /\btech\s+stacks?\s+(he\s+)?use\b/i,
+      /\bwhat\s+tech\s+stacks?\b/i,
+      /\bwhat\s+technologies\s+does\s+he\s+use\b/i,
+    ],
+    text: "Next.js, React, Express, NestJS, MongoDB, PostgreSQL, Vue.",
   },
   {
-    patterns: [/\b(can|do)\s+you\s+(access|get)\s+real[- ]?time\b/i],
-    text: REALTIME_UNAVAILABLE_MESSAGE,
+    patterns: [/\babout\s+him\b/i, /\btell\s+me\s+about\s+him\b/i],
+    text: "Software engineer.",
   },
 ];
 
