@@ -65,7 +65,7 @@ const PREDEFINED_RESPONSES = [
       /\byour\s+developer\b/i,
       /\byour\s+creator\b/i,
     ],
-    text: "Daniel Gidey.",
+    text: "Daniel Gidey. GitHub: https://github.com/dan-seng | LinkedIn: https://linkedin.com/in/danielgidey",
   },
   {
     patterns: [
@@ -81,11 +81,11 @@ const PREDEFINED_RESPONSES = [
       /\bwhat\s+tech\s+stacks?\b/i,
       /\bwhat\s+technologies\s+does\s+he\s+use\b/i,
     ],
-    text: "Next.js, React, Express, NestJS, MongoDB, PostgreSQL, Vue.",
+    text: "Dan uses frameworks like: Next.js, React, Express, NestJS, MongoDB, PostgreSQL, Vue.",
   },
   {
     patterns: [/\babout\s+him\b/i, /\btell\s+me\s+about\s+him\b/i],
-    text: "Software engineer.",
+    text: "Daniel Gidey is a software engineer from Ethiopia. Stack: Next.js, React, Express, NestJS, MongoDB, PostgreSQL, Vue. GitHub: https://github.com/dan-seng | LinkedIn: https://linkedin.com/in/danielgidey",
   },
 ];
 
