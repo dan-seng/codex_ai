@@ -1,45 +1,122 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="JARVIS — a fast, private Gemini-powered AI assistant." />
     <title>JARVIS-AI</title>
-    <link rel="stylesheet" href="style.css">
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("jarvis.theme");
+          if (!t)
+            t = window.matchMedia("(prefers-color-scheme: light)").matches
+              ? "light"
+              : "dark";
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      })();
+    </script>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div id="app">
-      <header>
-        <h1>JARVIS-AI</h1>
-        <nav>
-          <button id="clearChat" title="Clear Chat">
-            <i class="bi bi-trash3"></i>
+      <aside id="sidebar" aria-label="Chat history">
+        <div class="sidebar-head">
+          <div class="brand">
+            <span class="brand-mark"><i class="bi bi-lightning-charge-fill"></i></span>
+            <span class="brand-name">JARVIS</span>
+          </div>
+          <button id="closeSidebar" class="icon-btn" title="Close sidebar" aria-label="Close sidebar">
+            <i class="bi bi-x-lg"></i>
           </button>
-          <a href="https://github.com/dan-seng" title="GitHub" target="_blank" rel="noopener noreferrer">
-            <i class="bi bi-github"></i>
-          </a>
-          <a href="https://linkedin.com/in/danielgidey" title="LinkedIn" target="_blank" rel="noopener noreferrer">
-            <i class="bi bi-linkedin"></i>
-          </a>
-        </nav>
-      </header>
-  <hr>
-      <div class="some">
-        <p>What is on you mind today?</p>
-      </div>
-      <div id="quick_actions" aria-label="Common questions"></div>
+        </div>
 
-      <div id="chat_container"></div>
-  
-      <form id="chat-form">
-        <textarea name="prompt" placeholder="Message…" rows="1" cols="1"></textarea>
-        <button type="submit">
-          <i class="bi bi-send-fill"></i>
+        <button id="newChat" class="new-chat">
+          <i class="bi bi-plus-lg"></i>
+          <span>New chat</span>
+          <kbd>⌘K</kbd>
         </button>
+
+        <div class="history-scroll">
+          <p class="history-label">Recent</p>
+          <nav id="historyList" aria-label="Conversations"></nav>
+        </div>
+
+        <div class="sidebar-foot">
+          <button id="themeToggle" class="foot-item">
+            <i class="bi bi-moon-stars"></i>
+            <span>Theme</span>
+          </button>
+          <div class="foot-links">
+            <a href="https://github.com/dan-seng" title="GitHub" target="_blank" rel="noopener noreferrer">
+              <i class="bi bi-github"></i>
+            </a>
+            <a href="https://linkedin.com/in/danielgidey" title="LinkedIn" target="_blank" rel="noopener noreferrer">
+              <i class="bi bi-linkedin"></i>
+            </a>
+          </div>
+        </div>
+      </aside>
+      <div id="sidebarBackdrop" aria-hidden="true"></div>
+
+      <main id="main">
+        <header class="topbar">
+          <button id="openSidebar" class="icon-btn" title="Open sidebar" aria-label="Open sidebar">
+            <i class="bi bi-list"></i>
+          </button>
+          <h2 id="topbarTitle" class="topbar-title">New chat</h2>
+          <div class="topbar-actions">
+            <span class="model-chip" title="Powered by Google Gemini">
+              <span class="status-dot" aria-hidden="true"></span>
+              <i class="bi bi-stars"></i>
+              <span>Gemini Flash</span>
+            </span>
+            <button id="clearChat" class="icon-btn" title="Clear current chat" aria-label="Clear current chat">
+              <i class="bi bi-trash3"></i>
+            </button>
+          </div>
+        </header>
+
+        <section id="welcome" class="welcome">
+          <div class="welcome-inner">
+            <div class="welcome-mark">
+              <i class="bi bi-lightning-charge-fill"></i>
+            </div>
+            <h1 class="welcome-title">What's on your mind?</h1>
+            <p class="welcome-sub">
+              JARVIS runs on Gemini. Ask anything — brainstorm, debug, or just chat.
+            </p>
+            <div id="suggestions" class="suggestion-grid" aria-label="Suggested questions"></div>
+          </div>
+        </section>
+
+        <section id="chat_container" class="thread" aria-live="polite" aria-label="Conversation"></section>
+      </main>
+
+      <form id="chat-form" class="composer-wrap" autocomplete="off">
+        <div class="composer">
+          <textarea
+            id="prompt"
+            name="prompt"
+            rows="1"
+            placeholder="Message JARVIS…"
+            aria-label="Message"
+          ></textarea>
+          <button id="sendBtn" type="submit" aria-label="Send message">
+            <i class="bi bi-arrow-up"></i>
+          </button>
+        </div>
+        <p class="composer-hint">
+          <i class="bi bi-keyboard"></i>
+          <span>Enter to send · Shift + Enter for a new line</span>
+        </p>
       </form>
     </div>
-  
+
     <script type="module" src="script.js"></script>
   </body>
-  
 </html>
