@@ -1,6 +1,4 @@
 import "bootstrap-icons/font/bootstrap-icons.css";
-import "@fontsource-variable/geist";
-import "@fontsource-variable/geist-mono";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 

@@ -46,8 +46,16 @@
 
 ## Typography
 
-- **UI Font:** Geist Variable (system-ui fallback)
-- **Mono Font:** Geist Mono Variable (SF Mono, Menlo fallback)
+- **UI Font:** native system stack — `-apple-system` / `Segoe UI Variable Text` /
+  `system-ui` / `Roboto` / `Helvetica Neue`. Matches Claude's actual rendering
+  (SF Pro on macOS, Segoe UI on Windows) and ships zero font bytes.
+- **Mono Font:** native system stack — `ui-monospace` / `SF Mono` / `Menlo` /
+  `Consolas` / `Liberation Mono`, for code blocks, code labels, and `kbd`.
+- **Math:** `Cambria` / `Times New Roman` serif, italic — equation styling is
+  intentionally typographic and independent of the UI face.
+- **Rationale:** the previous self-hosted Geist Variable pair was replaced. The
+  system stack is both closer to the reference product and removes two woff2
+  families from the critical path.
 - **Scale:**
   - `--text-xs: 0.7rem` — Labels, timestamps
   - `--text-sm: 0.85rem` — UI labels, hints
