@@ -5,7 +5,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="JARVIS — a fast, private Gemini-powered AI assistant." />
-    <title>JARVIS-AI</title>
+    <title>JARVIS</title>
     <script>
       (function () {
         try {
@@ -27,16 +27,21 @@
       <aside id="sidebar" aria-label="Chat history">
         <div class="sidebar-head">
           <div class="brand">
-            <span class="brand-mark"><i class="bi bi-lightning-charge-fill"></i></span>
+            <span class="brand-mark" aria-hidden="true"><i class="bi bi-lightning-charge-fill"></i></span>
             <span class="brand-name">JARVIS</span>
           </div>
-          <button id="closeSidebar" class="icon-btn" title="Close sidebar" aria-label="Close sidebar">
-            <i class="bi bi-x-lg"></i>
+          <button
+            id="sidebarToggle"
+            class="icon-btn"
+            title="Close sidebar"
+            aria-label="Close sidebar"
+          >
+            <i class="bi bi-layout-sidebar-inset"></i>
           </button>
         </div>
 
         <button id="newChat" class="new-chat">
-          <i class="bi bi-plus-lg"></i>
+          <i class="bi bi-plus-lg" aria-hidden="true"></i>
           <span>New chat</span>
           <kbd>⌘K</kbd>
         </button>
@@ -48,73 +53,88 @@
 
         <div class="sidebar-foot">
           <button id="themeToggle" class="foot-item">
-            <i class="bi bi-moon-stars"></i>
+            <i class="bi bi-moon-stars" aria-hidden="true"></i>
             <span>Theme</span>
           </button>
           <div class="foot-links">
-            <a href="https://github.com/dan-seng" title="GitHub" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/dan-seng" title="GitHub" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
               <i class="bi bi-github"></i>
             </a>
-            <a href="https://linkedin.com/in/danielgidey" title="LinkedIn" target="_blank" rel="noopener noreferrer">
+            <a href="https://linkedin.com/in/danielgidey" title="LinkedIn" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
               <i class="bi bi-linkedin"></i>
             </a>
           </div>
         </div>
       </aside>
+
       <div id="sidebarBackdrop" aria-hidden="true"></div>
 
       <main id="main">
         <header class="topbar">
-          <button id="openSidebar" class="icon-btn" title="Open sidebar" aria-label="Open sidebar">
-            <i class="bi bi-list"></i>
+          <button
+            id="openSidebar"
+            class="icon-btn"
+            title="Open sidebar"
+            aria-label="Open sidebar"
+            aria-controls="sidebar"
+            aria-expanded="false"
+          >
+            <i class="bi bi-layout-sidebar-inset"></i>
           </button>
           <h2 id="topbarTitle" class="topbar-title">New chat</h2>
           <div class="topbar-actions">
             <span class="model-chip" title="Powered by Google Gemini">
               <span class="status-dot" aria-hidden="true"></span>
-              <i class="bi bi-stars"></i>
-              <span>Gemini Flash</span>
+              <i class="bi bi-stars" aria-hidden="true"></i>
+              <span>Gemini&nbsp;Flash</span>
             </span>
-            <button id="clearChat" class="icon-btn" title="Clear current chat" aria-label="Clear current chat">
+            <button
+              id="clearChat"
+              class="icon-btn"
+              title="Clear current chat"
+              aria-label="Clear current chat"
+            >
               <i class="bi bi-trash3"></i>
             </button>
           </div>
         </header>
 
-        <section id="welcome" class="welcome">
-          <div class="welcome-inner">
-            <div class="welcome-mark">
-              <i class="bi bi-lightning-charge-fill"></i>
+        <div class="scroll-area">
+          <section id="welcome" class="welcome">
+            <div class="welcome-inner">
+              <div class="welcome-mark" aria-hidden="true">
+                <i class="bi bi-lightning-charge-fill"></i>
+              </div>
+              <h1 class="welcome-title">What's on your mind?</h1>
+              <p class="welcome-sub">
+                JARVIS runs on Gemini. Ask anything — brainstorm, debug, or just chat.
+              </p>
+              <div id="suggestions" class="suggestion-list" aria-label="Suggested questions"></div>
             </div>
-            <h1 class="welcome-title">What's on your mind?</h1>
-            <p class="welcome-sub">
-              JARVIS runs on Gemini. Ask anything — brainstorm, debug, or just chat.
-            </p>
-            <div id="suggestions" class="suggestion-grid" aria-label="Suggested questions"></div>
-          </div>
-        </section>
+          </section>
 
-        <section id="chat_container" class="thread" aria-live="polite" aria-label="Conversation"></section>
-      </main>
-
-      <form id="chat-form" class="composer-wrap" autocomplete="off">
-        <div class="composer">
-          <textarea
-            id="prompt"
-            name="prompt"
-            rows="1"
-            placeholder="Message JARVIS…"
-            aria-label="Message"
-          ></textarea>
-          <button id="sendBtn" type="submit" aria-label="Send message">
-            <i class="bi bi-arrow-up"></i>
-          </button>
+          <section id="chat_container" class="thread" aria-live="polite" aria-label="Conversation"></section>
         </div>
-        <p class="composer-hint">
-          <i class="bi bi-keyboard"></i>
-          <span>Enter to send · Shift + Enter for a new line</span>
-        </p>
-      </form>
+
+        <form id="chat-form" class="composer-wrap" autocomplete="off">
+          <div class="composer">
+            <textarea
+              id="prompt"
+              name="prompt"
+              rows="1"
+              placeholder="Message JARVIS…"
+              aria-label="Message"
+              spellcheck="false"
+            ></textarea>
+            <button id="sendBtn" type="submit" aria-label="Send message">
+              <i class="bi bi-arrow-up"></i>
+            </button>
+          </div>
+          <p class="composer-hint">
+            <kbd>Enter</kbd> to send<span aria-hidden="true"> · </span><kbd>Shift</kbd><span aria-hidden="true">+</span><kbd>Enter</kbd> for a new line
+          </p>
+        </form>
+      </main>
     </div>
 
     <script type="module" src="script.js"></script>
