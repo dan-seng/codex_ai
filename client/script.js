@@ -15,14 +15,14 @@ const newChatBtn = document.getElementById("newChat");
 const clearChatBtn = document.getElementById("clearChat");
 const themeToggle = document.getElementById("themeToggle");
 const openSidebarBtn = document.getElementById("openSidebar");
-const closeSidebarBtn = document.getElementById("closeSidebar");
-const sidebar = document.getElementById("sidebar");
-const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+const sidebarToggle = document.getElementById("sidebarToggle");
+const app = document.getElementById("app");
 const topbarTitle = document.getElementById("topbarTitle");
 
 const STORE_KEY = "jarvis.conversations.v1";
 const ACTIVE_KEY = "jarvis.activeConv.v1";
 const THEME_KEY = "jarvis.theme";
+const SIDEBAR_KEY = "jarvis.sidebar.v1";
 
 const BASE_URL = (
   import.meta.env.VITE_CHAT_URL || import.meta.env.LOCAL_URL
@@ -123,6 +123,39 @@ function updateThemeIcon(theme) {
     theme === "dark" ? "bi bi-moon-stars" : "bi bi-sun";
 }
 
+// ===== Sidebar =====
+function isSidebarOpen() {
+  return app.classList.contains("sidebar-open");
+}
+
+function setSidebar(open) {
+  app.classList.toggle("sidebar-open", open);
+  openSidebarBtn.setAttribute("aria-expanded", String(open));
+  try {
+    localStorage.setItem(SIDEBAR_KEY, open ? "1" : "0");
+  } catch {}
+}
+
+function initSidebar() {
+  let saved = null;
+  try {
+    saved = localStorage.getItem(SIDEBAR_KEY);
+  } catch {}
+  setSidebar(saved === "1");
+}
+
+function toggleSidebar() {
+  setSidebar(!isSidebarOpen());
+}
+
+function openSidebar() {
+  setSidebar(true);
+}
+
+function closeSidebar() {
+  setSidebar(false);
+}
+
 // ===== Markdown helpers =====
 const escapeHtml = (value) =>
   value
@@ -181,10 +214,14 @@ function flashCopyBtn(btn) {
 }
 
 // ===== Rendering =====
-function avatarHtml(role) {
-  return role === "ai"
-    ? '<span class="avatar ai"><i class="bi bi-lightning-charge-fill"></i></span>'
-    : '<span class="avatar user"><i class="bi bi-person-fill"></i></span>';
+const ROLES = {
+  ai: { name: "JARVIS", icon: "bi-lightning-charge-fill" },
+  user: { name: "You", icon: "bi-person-fill" },
+};
+
+function labelHtml(role) {
+  const r = ROLES[role] || ROLES.ai;
+  return `<span class="avatar ${role}" aria-hidden="true"><i class="bi ${r.icon}"></i></span><span>${r.name}</span>`;
 }
 
 function enhanceCodeBlocks(root) {
@@ -203,6 +240,7 @@ function enhanceCodeBlocks(root) {
     copy.type = "button";
     copy.className = "copy-code";
     copy.title = "Copy code";
+    copy.setAttribute("aria-label", "Copy code");
     copy.innerHTML = '<i class="bi bi-clipboard"></i>';
     copy.addEventListener("click", async () => {
       await copyText(code.innerText);
@@ -215,42 +253,49 @@ function enhanceCodeBlocks(root) {
 }
 
 function attachCopyBtn(meta, text) {
+  if (!meta || meta.querySelector(".copy-btn")) return;
   const copyBtn = document.createElement("button");
   copyBtn.type = "button";
   copyBtn.className = "copy-btn";
   copyBtn.title = "Copy message";
-  copyBtn.innerHTML = '<i class="bi bi-copy"></i> Copy';
+  copyBtn.setAttribute("aria-label", "Copy message");
+  copyBtn.innerHTML = '<i class="bi bi-copy"></i><span>Copy</span>';
   copyBtn.addEventListener("click", async () => {
     await copyText(text);
     const icon = copyBtn.querySelector("i");
+    const label = copyBtn.querySelector("span");
     icon.className = "bi bi-check2";
+    label.textContent = "Copied";
     copyBtn.classList.add("done");
-    copyBtn.lastChild.textContent = " Copied";
     setTimeout(() => {
       icon.className = "bi bi-copy";
+      label.textContent = "Copy";
       copyBtn.classList.remove("done");
-      copyBtn.lastChild.textContent = " Copy";
     }, 1600);
   });
   meta.appendChild(copyBtn);
 }
 
+function scrollToEnd() {
+  const area = document.querySelector(".scroll-area");
+  area.scrollTop = area.scrollHeight;
+}
+
 function appendMessage(role, text, { animate = true } = {}) {
   const wrapper = document.createElement("div");
   wrapper.className = `msg ${role}`;
-  wrapper.style.animation = animate ? "" : "none";
+  if (!animate) wrapper.style.animation = "none";
 
-  const col = document.createElement("div");
-  col.className = "msg-col";
+  const label = document.createElement("div");
+  label.className = "msg-label";
+  label.innerHTML = labelHtml(role);
+
   const bubble = document.createElement("div");
   bubble.className = "bubble";
+
   const meta = document.createElement("div");
   meta.className = "meta";
   meta.innerHTML = `<span class="time">${timeLabel()}</span>`;
-  col.append(bubble, meta);
-
-  wrapper.innerHTML = avatarHtml(role);
-  wrapper.appendChild(col);
 
   if (role === "user") {
     bubble.innerHTML = escapeHtml(text).replaceAll("\n", "<br/>");
@@ -260,9 +305,23 @@ function appendMessage(role, text, { animate = true } = {}) {
     attachCopyBtn(meta, text);
   }
 
+  if (role === "user") {
+    wrapper.append(bubble, label, meta);
+  } else {
+    wrapper.append(label, bubble, meta);
+  }
+
   chatContainer.appendChild(wrapper);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+  scrollToEnd();
   return bubble;
+}
+
+function showError(bubble, message) {
+  bubble.classList.remove("streaming");
+  bubble.classList.add("is-error");
+  bubble.innerHTML = `<i class="bi bi-exclamation-circle me-1"></i>${escapeHtml(
+    message,
+  )}`;
 }
 
 function renderThread() {
@@ -283,7 +342,7 @@ function renderThread() {
   conv.messages.forEach((m) => {
     if (m.role === "user" || m.text) appendMessage(m.role, m.text, { animate: false });
   });
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+  scrollToEnd();
 }
 
 function renderSidebar() {
@@ -297,7 +356,7 @@ function renderSidebar() {
       "aria-label",
       `Open chat: ${conv.title === "New chat" ? "New chat" : conv.title}`,
     );
-    item.innerHTML = `<i class="bi bi-chat-left-text"></i><span class="history-title">${escapeHtml(conv.title)}</span>`;
+    item.innerHTML = `<i class="bi bi-chat-left-text" aria-hidden="true"></i><span class="history-title">${escapeHtml(conv.title)}</span>`;
 
     const del = document.createElement("button");
     del.className = "history-del";
@@ -324,7 +383,7 @@ function renderSidebar() {
 function renderSuggestions() {
   suggestions.innerHTML = SUGGESTIONS.map(
     (s, i) => `
-    <button class="suggestion" type="button" style="animation-delay:${i * 0.06}s" data-prompt="${escapeHtml(s.prompt)}">
+    <button class="suggestion" type="button" role="listitem" style="animation-delay:${0.08 + i * 0.05}s" data-prompt="${escapeHtml(s.prompt)}">
       <span class="suggestion-tile"><i class="bi ${s.icon}"></i></span>
       <span class="suggestion-body">
         <b>${escapeHtml(s.title)}</b>
@@ -348,7 +407,7 @@ function newConversation() {
   saveActiveId();
   renderSidebar();
   renderThread();
-  closeSidebar();
+  if (window.matchMedia("(max-width: 60rem)").matches) closeSidebar();
   promptInput.focus();
 }
 
@@ -357,7 +416,7 @@ function switchConversation(id) {
   saveActiveId();
   renderSidebar();
   renderThread();
-  closeSidebar();
+  if (window.matchMedia("(max-width: 60rem)").matches) closeSidebar();
 }
 
 function deleteConversation(id) {
@@ -382,12 +441,13 @@ function clearCurrentChat() {
   saveConversations();
   renderSidebar();
   renderThread();
+  promptInput.focus();
 }
 
 // ===== Typing / loader =====
 function loader(el) {
   el.innerHTML = `
-    <span class="typing-indicator" aria-label="Assistant is thinking">
+    <span class="typing-indicator" aria-label="JARVIS is thinking">
       <span></span><span></span><span></span>
     </span>`;
 }
@@ -417,17 +477,17 @@ function typeResponse(el, text) {
     const chars = Array.from(text);
     let i = 0;
     const step = () => {
-      const chunkSize = chars[i] === "\n" ? 1 : 2;
+      const chunkSize = chars[i] === "\n" ? 1 : 3;
       i = Math.min(i + chunkSize, chars.length);
       el.textContent = chars.slice(0, i).join("");
-      chatContainer.scrollTop = chatContainer.scrollHeight;
+      scrollToEnd();
 
       if (i >= chars.length) {
         stopTyping();
         el.classList.remove("streaming");
         el.innerHTML = renderMarkdown(text);
         enhanceCodeBlocks(el);
-        attachCopyBtn(el.closest(".msg-col").querySelector(".meta"), text);
+        attachCopyBtn(el.closest(".msg").querySelector(".meta"), text);
         resolve();
       }
     };
@@ -451,6 +511,10 @@ function setResponding(on) {
   suggestions
     .querySelectorAll(".suggestion")
     .forEach((b) => (b.disabled = on));
+}
+
+function updateSendState() {
+  submitButton.disabled = !isResponding && !promptInput.value.trim();
 }
 
 const sendPrompt = async (rawPrompt) => {
@@ -483,8 +547,9 @@ const sendPrompt = async (rawPrompt) => {
   saveConversations();
   renderSidebar();
 
-  form.reset();
-  promptInput.style.height = "2.6rem";
+  promptInput.value = "";
+  resizePromptInput();
+  updateSendState();
 
   const msgDiv = appendMessage("ai", "");
   loader(msgDiv);
@@ -506,45 +571,38 @@ const sendPrompt = async (rawPrompt) => {
       if (text) {
         await typeResponse(msgDiv, text);
       } else {
-        msgDiv.textContent = "I didn't get a response. Try again?";
+        showError(msgDiv, "I didn't get a response. Try again?");
       }
       conv.messages[conv.messages.length - 1].text = text;
     } else {
-      msgDiv.textContent = "Something went wrong. Please try again.";
-      conv.messages[conv.messages.length - 1].text = msgDiv.textContent;
+      showError(msgDiv, "Something went wrong. Please try again.");
+      conv.messages[conv.messages.length - 1].text =
+        "Something went wrong. Please try again.";
     }
   } catch (err) {
     if (err.name !== "AbortError") {
-      msgDiv.textContent = "Something went wrong. Please try again.";
-      conv.messages[conv.messages.length - 1].text = msgDiv.textContent;
+      showError(msgDiv, "Something went wrong. Please try again.");
+      conv.messages[conv.messages.length - 1].text =
+        "Something went wrong. Please try again.";
       console.error(err);
     }
   } finally {
     stopTyping();
     saveConversations();
     setResponding(false);
+    updateSendState();
   }
 };
-
-// ===== Sidebar mobile =====
-function openSidebar() {
-  sidebar.classList.add("open");
-  sidebarBackdrop.classList.add("show");
-}
-
-function closeSidebar() {
-  sidebar.classList.remove("open");
-  sidebarBackdrop.classList.remove("show");
-}
 
 // ===== Composer =====
 function resizePromptInput() {
   promptInput.style.height = "auto";
-  promptInput.style.height = `${Math.min(promptInput.scrollHeight, 200)}px`;
+  promptInput.style.height = `${Math.min(promptInput.scrollHeight, 192)}px`;
 }
 
 // ===== Init =====
 initTheme();
+initSidebar();
 renderSuggestions();
 renderSidebar();
 
@@ -557,9 +615,11 @@ if (getActive()) {
 newChatBtn.addEventListener("click", newConversation);
 clearChatBtn.addEventListener("click", clearCurrentChat);
 themeToggle.addEventListener("click", toggleTheme);
-openSidebarBtn.addEventListener("click", openSidebar);
-closeSidebarBtn.addEventListener("click", closeSidebar);
-sidebarBackdrop.addEventListener("click", closeSidebar);
+openSidebarBtn.addEventListener("click", toggleSidebar);
+sidebarToggle.addEventListener("click", closeSidebar);
+document
+  .getElementById("sidebarBackdrop")
+  .addEventListener("click", closeSidebar);
 
 suggestions.addEventListener("click", async (e) => {
   const chip = e.target.closest(".suggestion");
@@ -570,10 +630,13 @@ suggestions.addEventListener("click", async (e) => {
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const prompt = new FormData(form).get("prompt");
-  await sendPrompt(prompt);
+  await sendPrompt(typeof prompt === "string" ? prompt : promptInput.value);
 });
 
-promptInput.addEventListener("input", resizePromptInput);
+promptInput.addEventListener("input", () => {
+  resizePromptInput();
+  updateSendState();
+});
 
 form.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
@@ -587,7 +650,10 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     newConversation();
   }
-  if (e.key === "Escape" && sidebar.classList.contains("open")) {
+  if (e.key === "Escape" && isSidebarOpen()) {
     closeSidebar();
   }
 });
+
+updateSendState();
+promptInput.focus();
